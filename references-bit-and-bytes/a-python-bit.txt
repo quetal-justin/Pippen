@@ -1,0 +1,79 @@
+Title:  a-python-bit.txt
+Name:   Justin M. C. Choi
+Date:   Nov/19/2019 (Tue)
+
+References:
+
+    1.  How to get bit value of hex number based on position in python
+        https://stackoverflow.com/questions/35520438/how-to-get-bit-value-of-hex-number-based-on-position-in-python
+
+    2.  null object in Python?
+        https://stackoverflow.com/questions/3289601/null-object-in-python
+
+Note:
+
+    1.  getBit() function
+        ```
+            def getBit(target, n, bitRange=4):
+                if (
+                    (target is not None) and (n in range(0,bitRange)) and (type(target) == str) and 
+                    (target.isdigit() or (target.upper() >= 'A' and target.upper() <= 'F'))
+                ):
+                    return (1) if (int(target, 16) & (1 << n) > 0) else (0)
+                else:
+                    return None
+        ```
+
+    2.  getBit() - Test Case (1)
+        ```
+            hexVal = 'A'
+            print(hexVal)               # A
+            print(getBit(hexVal, 0))    # 0
+            print(getBit(hexVal, 1))    # 1
+            print(getBit(hexVal, 2))    # 0
+            print(getBit(hexVal, 3))    # 1
+            print(getBit(hexVal, 4))    # None
+            print(getBit(hexVal, 5))    # None
+            print(getBit(hexVal, 6))    # None
+            print(getBit(hexVal, 7))    # None
+        ```
+
+    3.  getBit() - Test Case (2)
+        ```
+            hexVal = '8'                
+            print(hexVal)               # 8
+            print(getBit(hexVal, 0))    # 0
+            print(getBit(hexVal, 1))    # 0
+            print(getBit(hexVal, 2))    # 0
+            print(getBit(hexVal, 3))    # 1
+        ```
+    
+    4.  getBit() - Test Case (3)
+        ```
+            hexVal = 'G'                
+            print(hexVal)               # G
+            print(getBit(hexVal, 0))    # None
+            print(getBit(hexVal, 1))    # None
+            print(getBit(hexVal, 2))    # None
+            print(getBit(hexVal, 3))    # None
+        ```
+    
+    5.  getBit() - Test Case (4)
+        ```
+            hexVal = None                
+            print(hexVal)               # None
+            print(getBit(hexVal, 0))    # None
+            print(getBit(hexVal, 1))    # None
+            print(getBit(hexVal, 2))    # None
+            print(getBit(hexVal, 3))    # None
+        ```
+    
+    6.  getBit() - Test Case (5)
+        ```
+            hexVal = 16             
+            print(hexVal)               # 16
+            print(getBit(hexVal, 0))    # None
+            print(getBit(hexVal, 1))    # None
+            print(getBit(hexVal, 2))    # None
+            print(getBit(hexVal, 3))    # None
+        ```

@@ -1,0 +1,58 @@
+Title:  a-python-byte.txt
+Name:   Justin M. C. Choi
+Date:   Nov/19/2019 (Tue)
+
+References:
+
+    1.  error UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte
+        https://stackoverflow.com/questions/42339876/error-unicodedecodeerror-utf-8-codec-cant-decode-byte-0xff-in-position-0-in
+
+    2.  What's the correct way to convert bytes to a hex string in Python 3?
+        https://stackoverflow.com/questions/6624453/whats-the-correct-way-to-convert-bytes-to-a-hex-string-in-python-3
+
+Note:
+
+    1.  Example - Read PNG file (bytes) [Python 3.5+]
+        ```
+            import sys
+            file = sys.argv[1]
+
+            with open(file, "rb") as f:
+                hexLines = []
+                for line in f.readlines():
+                    print(type(line))               # eg. <class 'bytes'>
+                    hexLine = line.hex()            # convert bytes to hex (no need to strip line: each singel byte matters when parsing PNG format)
+                    hexLines.append(hexLine)
+                    print(type(hexLine))            # eg. 89504e47
+                    print(hexLine)                  # eg. <class 'str'>
+
+                contents = "".join(hexLines)        # combine all hex values in the array to a single string.
+        ```
+
+    1b. Example - Read PNG file (bytes) [Python 3.5+] (Simplified - 1)
+        ```
+            import sys
+            file = sys.argv[1]
+
+            with open(file, "rb") as f:
+                hexLine = "".join([line.hex() for line in f.readlines()[0:2]])  # convert bytes to hex (no need to strip line: each singel byte matters when parsing PNG format)
+                print(hexLine)
+        ```
+
+    1c. Example - Read PNG file (bytes) [Python 3.5+] (Simplified - 2)
+        
+
+    2.  "bytes" / "bytearray" -> "str" [Python 3.5+]
+        ```
+            b'\xde\xad\xbe\xef'.hex()               # 'deadbeef'
+        ```
+
+    3.  "str" -> "bytes" [Python 3.0+]
+        ```
+            bytes.fromhex('deadbeef')               # b'\xde\xad\xbe\xef'
+        ```
+
+    4.  "bytes" -> "str" - (2)
+        ```
+            [hex(x) for x in b'\xde\xad\xbe\xef']   # ['0xde', '0xad', '0xbe', '0xef']
+        ```
