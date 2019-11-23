@@ -6,7 +6,33 @@ file = sys.argv[1] # get file path
 contents = ""
 
 # ---------------------------------------------------------------------------------
-# A. Chunks 
+# A. Data Stream
+#
+# - to store all chunks in the image. 
+# ---------------------------------------------------------------------------------
+class DataStrem:
+
+    def __init__(self):
+        self._idhrChunk = None
+        self._plteChunk = None
+        self._idatChunk = None
+        self._iendChunk = None
+        pass
+
+    def set_idhr_chunk(self, idhrChunk):
+        self._idhrChunk = idhrChunk
+
+    def set_plte_chunk(self, plteChunk):
+        self._plteChunk = plteChunk
+
+    def set_idat_chunk(self, idatChunk):
+        self._idatChunk = idatChunk
+
+    def set_iend_chunk(self, iendChunk):
+        self._iendChunk = iendChunk
+
+# ---------------------------------------------------------------------------------
+# X. Chunk
 # 
 # - Factor Pattern for object creation
 # - if not having __init__(self) in subclass, super class's __init__(self) is called
