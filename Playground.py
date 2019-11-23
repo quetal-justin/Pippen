@@ -9,18 +9,40 @@ contents = ""
 # A. Chunks 
 # 
 # - Factor Pattern for object creation
+# - if not having __init__(self) in subclass, super class's __init__(self) is called
+# - reference: Understanding Class Inheritance in Python 3
+#   https://www.digitalocean.com/community/tutorials/understanding-class-inheritance-in-python-3
 # ---------------------------------------------------------------------------------
 class Chunk:
+
+    def __init__(self):
+        self._length = None
+        self._chunkType = None
+        self._chunkData = None
+        self._crc = None
+        pass
 
     # Factory Pattern 
     @staticmethod
     def create(hexChunkType):
-        creator = get_creator(hexChunkType)
+        creator = _get_creator(hexChunkType)
         return creator()
+
+    def get_length(self):
+        return self._length
+
+    def get_type(self):
+        return self._chunkType
+
+    def get_data(self):
+        return self._chunkData
+
+    def get_crc(self):
+        return self._crc
     
     # def extractChunkData(self):
 
-def get_creator(hexChunkType):
+def _get_creator(hexChunkType):
     if hexChunkType == '49484452': # IHDR Chunk
         return IdhrChunk
     elif hexChunkType == '504C5445': # PLTE Chunk
@@ -33,24 +55,16 @@ def get_creator(hexChunkType):
         raise ValueError(hexChunkType)
 
 class IdhrChunk(Chunk):
-    def __init__(self):
-        self._element = None
-        print(type(self))
+    pass
 
 class PlteChunk(Chunk):
-    def __init__(self):
-        self._element = None
-        print(type(self))
+    pass
 
 class IdatChunk(Chunk):
-    def __init__(self):
-        self._element = None
-        print(type(self))
+    pass
 
 class IendChunk(Chunk):
-    def __init__(self):
-        self._element = None
-        print(type(self))
+    pass
 
 # ---------------------------------------------------------------------------------
 # Y. Bits
@@ -79,5 +93,7 @@ with open(file, "rb") as f:
 # print(globals()['ChunkCreator'])
 
 plteChunk = Chunk.create('504C5445')
+print(plteChunk.get_length())
 
 idhrChunk = Chunk.create('49484452')
+print(plteChunk.get_length())
