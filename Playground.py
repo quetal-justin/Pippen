@@ -89,27 +89,35 @@ class IdhrChunk(Chunk):
     # override
     def extract_data(self, length, hexChunkData):
         data = {
-            'width': None,                # 4-bytes; unsigned int; 0 is invalid
-            'height': None,               # 4-bytes; unsigned int; 0 is invalid
-            'bitDepth': None,            # 1-byte; int; number of bits per sample; valid values = 1,2,4,8,16; not all values allowed for all colour types.
-            'colourType': None,          # 1-byte; int; PNG image type; valid values = 0,2,3,4,6
-            'compressionMethod': None,   # 1-byte; int; method to compress the image data; (#)valid value = 0(#); 
-            'filterMethod': None,        # 1-byte; int; preprocessing method applied before compresson; (#)valid value = 0(#); 
-            'interlaceMethod': None      # 1-byte; int; transmission order of the image data before compresson; valid value = 0 (no interlace) or 1 (Adam7 interlace).
+            'width': None,              # 4-bytes; unsigned int; 0 is invalid
+            'height': None,             # 4-bytes; unsigned int; 0 is invalid
+            'bitDepth': None,           # 1-byte; int; number of bits per sample; valid values = 1,2,4,8,16; not all values allowed for all colour types.
+            'colourType': None,         # 1-byte; int; PNG image type; valid values = 0,2,3,4,6
+            'compressionMethod': None,  # 1-byte; int; method to compress the image data; (#)valid value = 0(#); 
+            'filterMethod': None,       # 1-byte; int; preprocessing method applied before compresson; (#)valid value = 0(#); 
+            'interlaceMethod': None     # 1-byte; int; transmission order of the image data before compresson; valid value = 0 (no interlace) or 1 (Adam7 interlace).
         }
+
+        assert (data['width'] is None), "Not None!!"
+        assert (data['height'] is None), "Not None!!"
+        assert (data['bitDepth'] is None), "Not None!!"
+        assert (data['colourType'] is None), "Not None!!"
+        assert (data['compressionMethod'] is None), "Not None!!"
+        assert (data['filterMethod'] is None), "Not None!!"
+        assert (data['interlaceMethod'] is None), "Not None!!"
 
         # data length must be 26 in IHDR
         if len(hexChunkData) == length * 2:
-            data.width = int(hexChunkData[0:8], 16)
-            data.height = int(hexChunkData[8:16], 16)
-            data.bitDepth = int(hexChunkData[16:18], 16)
-            data.colourType = int(hexChunkData[18:20], 16)
-            data.compressionMethod = int(hexChunkData[20:22], 16)
-            data.filterMethod = int(hexChunkData[22:24], 16)
-            data.interlaceMethod = int(hexChunkData[24:26], 16)
+            data['width'] = int(hexChunkData[0:8], 16)
+            data['height'] = int(hexChunkData[8:16], 16)
+            data['bitDepth'] = int(hexChunkData[16:18], 16)
+            data['colourType'] = int(hexChunkData[18:20], 16)
+            data['compressionMethod'] = int(hexChunkData[20:22], 16)
+            data['filterMethod'] = int(hexChunkData[22:24], 16)
+            data['interlaceMethod'] = int(hexChunkData[24:26], 16)
             return data
         else:
-            raise ValueError(hexChunkData)
+            raise ValueError(len(hexChunkData))
 
 class PlteChunk(Chunk):
     
@@ -146,8 +154,40 @@ def get_bit(target, n, bitRange=4):
 
 # 1 byte = 8 bits = 2 * 4 bits = 2 * 1 hex digit = 2 hex digits 
 with open(file, "rb") as f:
-    hexLine = "".join([line.hex() for line in f.readlines()])  # convert bytes to hex (no need to strip line: each singel byte matters when parsing PNG format)
+    hexLine = "".join([line.hex() for line in f.readlines()[0:20]]).upper()  # convert bytes to hex (no need to strip line: each singel byte matters when parsing PNG format)
     
+    if hexLine[0:16] == "89504E470D0A1A0A": # png must begin with this eight bytes
+        chunkStartIdx = 16
+        while chunkStartIdx != len(hexLine):
+            print(chunkStartIdx)
+            
+            # parse chunks
+            length = int(hexLine[chunkStartIdx : chunkStartIdx+8], 16)                  # get Length
+            hexChunkType = hexLine[chunkStartIdx+8 : chunkStartIdx+16]                  # get Chunk Type
+            hexChunkData = hexLine[chunkStartIdx+16 : chunkStartIdx+16+length*2]        # get Chunk Data (note: length -> bytes => need *2)
+            hexCrc = hexLine[chunkStartIdx+16+length*2 : chunkStartIdx+16+length*2+8]   # get CRC
+            assert (length * 2 == len(hexChunkData)), "Inconsistent Data: hex should have a double of length than byte!!"
+            assert (len(hexLine[chunkStartIdx : chunkStartIdx+8]) + len(hexChunkType) + len(hexChunkData) + len(hexCrc) == chunkStartIdx+length*2+8), "Inconsistent Data!"
+            
+            # create new Chunk of corresponding type
+            chunk = Chunk.create(hexChunkType)
+            assert (chunk.get_length() is None), "Wrong Value!!"
+            assert (chunk.get_type() is None), "Wrong Value!!"
+            assert (chunk.get_data() is None), "Wrong Value!!"
+            assert (chunk.get_crc() is None), "Wrong Value!!"
+            
+            # extract Chunk Data based on its type (polymorphism)
+            chunkData = chunk.extract_data(length, hexChunkData)
+            print(chunkData)
+
+            # store information into Chunk object
+
+            # update chunk starting index (i.e. the counter)
+            chunkStartIdx += 16 + length + 8
+            
+    else:
+        raise ValueError(hexLine[0:16])
+
     print(hexLine)
     # print(getBit(hexLine[0], 3))
 
