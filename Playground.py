@@ -65,7 +65,8 @@ class Datastream:
         self._plteChunk = plteChunk
 
     def _set_idat_chunk(self, idatChunk):
-        self._idatChunk = idatChunk
+        self._idatChunk = [] if (self._idatChunk is None) else (self._idatChunk)
+        self._idatChunk.append(idatChunk)
 
     def _set_iend_chunk(self, iendChunk):
         self._iendChunk = iendChunk
