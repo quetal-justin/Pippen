@@ -42,10 +42,10 @@ class DataStrem:
 class Chunk:
 
     def __init__(self):
-        self._length = None
-        self._chunkType = None
-        self._chunkData = None
-        self._crc = None
+        self._length = None         # 4-bytes; unsigned int; for _chunkData; valid values: 0 ~ 2^(31) - 1
+        self._chunkType = None      # 4-bytes (8 hex characters); hex string values
+        self._chunkData = None      # _length-bytes; dictionary or None
+        self._crc = None            # 4-bytes (8 hex characters); hex string values; for _chunkType and _chunkData
         pass
 
     # Factory Pattern 
@@ -54,6 +54,13 @@ class Chunk:
         creator = _get_creator(chunkType)
         return creator()
 
+    # - this is called when child class has no overriding, i.e. no data field.
+    # - None is returned
+    # - length = data length
+    def extract_data(self, length, hexChunkData):
+        return None 
+
+    # --- accessors ---
     def get_length(self):
         return self._length
 
@@ -65,13 +72,21 @@ class Chunk:
 
     def get_crc(self):
         return self._crc
-    
-    # - this is called when child class has no overriding, i.e. no data field.
-    # - None is returned
-    # - length = data length
-    def extract_data(self, length, hexChunkData):
-        return None 
 
+    # --- mutators ---
+    def set_length(self, length):
+        self._length = length
+    
+    def set_type(self, chunkType):
+        self._chunkType = chunkType
+
+    def set_data(self, chunkData):
+        self._chunkData = chunkData
+
+    def set_crc(self, crc):
+        self._crc = crc
+
+# used by Chunk class
 def _get_creator(chunkType):
     if chunkType == '49484452' or chunkType == 'IHDR' or chunkType == 'ihdr': # IHDR Chunk
         return IdhrChunk
@@ -181,6 +196,14 @@ with open(file, "rb") as f:
             print(chunkData)
 
             # store information into Chunk object
+            chunk.set_length(length)
+            chunk.set_type(hexChunkType)
+            chunk.set_data(chunkData)
+            chunk.set_crc(hexCrc)
+            assert (chunk.get_length() == length), "Wrong Value!!"
+            assert (chunk.get_type() == hexChunkType), "Wrong Value!!"
+            assert (chunk.get_data() == chunkData), "Wrong Value!!"
+            assert (chunk.get_crc() == hexCrc), "Wrong Value!!"
 
             # update chunk starting index (i.e. the counter)
             chunkStartIdx += 16 + length + 8
