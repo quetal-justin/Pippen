@@ -10,25 +10,64 @@ contents = ""
 #
 # - to store all chunks in the image. 
 # ---------------------------------------------------------------------------------
-class DataStrem:
+class Datastream:
 
     def __init__(self):
+        self._signature = None
         self._idhrChunk = None
         self._plteChunk = None
         self._idatChunk = None
         self._iendChunk = None
         pass
 
-    def set_idhr_chunk(self, idhrChunk):
+    # --- accessors ---
+    def get_signature(self):
+        return self._signature
+
+    def get_idhr_chunk(self):
+        return self._idhrChunk
+
+    def get_plte_chunk(self):
+        return self._plteChunk
+
+    def get_idat_chunk(self):
+        return self._idatChunk
+
+    def get_iend_chunk(self):
+        return self._iendChunk
+
+    # --- mutators ---
+    def set_signature(self, signature):
+        self._signature = signature
+
+    # interface of chunk setter
+    def set_chunk(self, chunk):
+        setter = self._get_setter(chunk.get_type())
+        setter(chunk)
+        
+    # factory; reuse _get_chunk_creator()
+    def _get_setter(self, chunkType):
+        if chunkType == '49484452' or chunkType == 'IHDR' or chunkType == 'ihdr': # IHDR Chunk
+            return self._set_idhr_chunk
+        elif chunkType == '504C5445' or chunkType == 'PLTE' or chunkType == 'plte': # PLTE Chunk
+            return self._set_plte_chunk
+        elif chunkType == '49444154' or chunkType == 'IDAT' or chunkType == 'idat': # IDAT Chunk(s)
+            return self._set_idat_chunk
+        elif chunkType == '49454E44' or chunkType == 'IEND' or chunkType == 'iend': # IEND Chunk
+            return self._set_iend_chunk
+        else:
+            raise ValueError(chunkType)
+
+    def _set_idhr_chunk(self, idhrChunk):
         self._idhrChunk = idhrChunk
 
-    def set_plte_chunk(self, plteChunk):
+    def _set_plte_chunk(self, plteChunk):
         self._plteChunk = plteChunk
 
-    def set_idat_chunk(self, idatChunk):
+    def _set_idat_chunk(self, idatChunk):
         self._idatChunk = idatChunk
 
-    def set_iend_chunk(self, iendChunk):
+    def _set_iend_chunk(self, iendChunk):
         self._iendChunk = iendChunk
 
 # ---------------------------------------------------------------------------------
@@ -51,7 +90,7 @@ class Chunk:
     # Factory Pattern 
     @staticmethod
     def create(chunkType):
-        creator = _get_creator(chunkType)
+        creator = _get_chunk_creator(chunkType)
         return creator()
 
     # - this is called when child class has no overriding, i.e. no data field.
@@ -87,7 +126,7 @@ class Chunk:
         self._crc = crc
 
 # used by Chunk class
-def _get_creator(chunkType):
+def _get_chunk_creator(chunkType):
     if chunkType == '49484452' or chunkType == 'IHDR' or chunkType == 'ihdr': # IHDR Chunk
         return IdhrChunk
     elif chunkType == '504C5445' or chunkType == 'PLTE' or chunkType == 'plte': # PLTE Chunk
@@ -167,14 +206,20 @@ def get_bit(target, n, bitRange=4):
 # Z. Main
 # ---------------------------------------------------------------------------------
 
+datastream = Datastream()
+
 # 1 byte = 8 bits = 2 * 4 bits = 2 * 1 hex digit = 2 hex digits 
 with open(file, "rb") as f:
-    hexLine = "".join([line.hex() for line in f.readlines()[0:20]]).upper()  # convert bytes to hex (no need to strip line: each singel byte matters when parsing PNG format)
+    hexLine = "".join([line.hex() for line in f.readlines()]).upper()  # convert bytes to hex (no need to strip line: each singel byte matters when parsing PNG format)
     
     if hexLine[0:16] == "89504E470D0A1A0A": # png must begin with this eight bytes
+        
+        # (optional) set png signature to the Datastream object
+        datastream.set_signature("89504E470D0A1A0A")
+        
         chunkStartIdx = 16
         while chunkStartIdx != len(hexLine):
-            print(chunkStartIdx)
+            print("[*] chunkStartIdx: {0}".format(chunkStartIdx))
             
             # parse chunks
             length = int(hexLine[chunkStartIdx : chunkStartIdx+8], 16)                  # get Length
@@ -182,7 +227,7 @@ with open(file, "rb") as f:
             hexChunkData = hexLine[chunkStartIdx+16 : chunkStartIdx+16+length*2]        # get Chunk Data (note: length -> bytes => need *2)
             hexCrc = hexLine[chunkStartIdx+16+length*2 : chunkStartIdx+16+length*2+8]   # get CRC
             assert (length * 2 == len(hexChunkData)), "Inconsistent Data: hex should have a double of length than byte!!"
-            assert (len(hexLine[chunkStartIdx : chunkStartIdx+8]) + len(hexChunkType) + len(hexChunkData) + len(hexCrc) == chunkStartIdx+length*2+8), "Inconsistent Data!"
+            assert (len(hexLine[chunkStartIdx : chunkStartIdx+8]) + len(hexChunkType) + len(hexChunkData) + len(hexCrc) == 16+length*2+8), "Inconsistent Data!"
             
             # create new Chunk of corresponding type
             chunk = Chunk.create(hexChunkType)
@@ -205,19 +250,29 @@ with open(file, "rb") as f:
             assert (chunk.get_data() == chunkData), "Wrong Value!!"
             assert (chunk.get_crc() == hexCrc), "Wrong Value!!"
 
-            # update chunk starting index (i.e. the counter)
-            chunkStartIdx += 16 + length + 8
+            # store Chunk object into Datastream object
+            datastream.set_chunk(chunk)
+
+            # update chunk starting index (4 bytes + 4 bytes + length bytes + 4 bytes = 2 * (4 + 4 + length + 4) = 16 + length*2 + 8
+            chunkStartIdx += 16 + length*2 + 8
             
     else:
         raise ValueError(hexLine[0:16])
 
-    print(hexLine)
-    # print(getBit(hexLine[0], 3))
+assert (not (datastream.get_idhr_chunk() is None)), "Is None!!"
+# assert (not (datastream.get_plte_chunk() is None)), "Is None!!"
+# assert (not (datastream.get_idat_chunk() is None)), "Is None!!"
+assert (not (datastream.get_iend_chunk() is None)), "Is None!!"
 
-# print(globals()['ChunkCreator'])
+# --- drafts ---
+#     print(hexLine)
+#     # print(getBit(hexLine[0], 3))
 
-plteChunk = Chunk.create('504C5445')
-print(plteChunk.get_length())
 
-iendChunk = Chunk.create('49454E44')
-print(iendChunk.extract_data(1,'E3'))
+# # print(globals()['ChunkCreator'])
+
+# plteChunk = Chunk.create('504C5445')
+# print(plteChunk.get_length())
+
+# iendChunk = Chunk.create('49454E44')
+# print(iendChunk.extract_data(1,'E3'))
