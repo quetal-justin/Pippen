@@ -66,7 +66,11 @@ class Chunk:
     def get_crc(self):
         return self._crc
     
-    # def extractChunkData(self):
+    # - this is called when child class has no overriding, i.e. no data field.
+    # - None is returned
+    # - length = data length
+    def extract_data(self, length, hexChunkData):
+        return None 
 
 def _get_creator(chunkType):
     if chunkType == '49484452' or chunkType == 'IHDR' or chunkType == 'ihdr': # IHDR Chunk
@@ -81,14 +85,45 @@ def _get_creator(chunkType):
         raise ValueError(chunkType)
 
 class IdhrChunk(Chunk):
-    pass
+    
+    # override
+    def extract_data(self, length, hexChunkData):
+        data = {
+            'width': None,                # 4-bytes; unsigned int; 0 is invalid
+            'height': None,               # 4-bytes; unsigned int; 0 is invalid
+            'bitDepth': None,            # 1-byte; int; number of bits per sample; valid values = 1,2,4,8,16; not all values allowed for all colour types.
+            'colourType': None,          # 1-byte; int; PNG image type; valid values = 0,2,3,4,6
+            'compressionMethod': None,   # 1-byte; int; method to compress the image data; (#)valid value = 0(#); 
+            'filterMethod': None,        # 1-byte; int; preprocessing method applied before compresson; (#)valid value = 0(#); 
+            'interlaceMethod': None      # 1-byte; int; transmission order of the image data before compresson; valid value = 0 (no interlace) or 1 (Adam7 interlace).
+        }
+
+        # data length must be 26 in IHDR
+        if len(hexChunkData) == length * 2:
+            data.width = int(hexChunkData[0:8], 16)
+            data.height = int(hexChunkData[8:16], 16)
+            data.bitDepth = int(hexChunkData[16:18], 16)
+            data.colourType = int(hexChunkData[18:20], 16)
+            data.compressionMethod = int(hexChunkData[20:22], 16)
+            data.filterMethod = int(hexChunkData[22:24], 16)
+            data.interlaceMethod = int(hexChunkData[24:26], 16)
+            return data
+        else:
+            raise ValueError(hexChunkData)
 
 class PlteChunk(Chunk):
-    pass
+    
+    # override
+    def extract_data(self, length, hexChunkData):
+        pass
 
 class IdatChunk(Chunk):
-    pass
 
+    # override
+    def extract_data(self, length, hexChunkData):
+        pass
+
+# no chunk data, i.e. no need to extract data
 class IendChunk(Chunk):
     pass
 
@@ -121,5 +156,5 @@ with open(file, "rb") as f:
 plteChunk = Chunk.create('504C5445')
 print(plteChunk.get_length())
 
-idhrChunk = Chunk.create('49484452')
-print(plteChunk.get_length())
+iendChunk = Chunk.create('49454E44')
+print(iendChunk.extract_data(1,'E3'))
