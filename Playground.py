@@ -24,8 +24,8 @@ class Chunk:
 
     # Factory Pattern 
     @staticmethod
-    def create(hexChunkType):
-        creator = _get_creator(hexChunkType)
+    def create(chunkType):
+        creator = _get_creator(chunkType)
         return creator()
 
     def get_length(self):
@@ -42,17 +42,17 @@ class Chunk:
     
     # def extractChunkData(self):
 
-def _get_creator(hexChunkType):
-    if hexChunkType == '49484452': # IHDR Chunk
+def _get_creator(chunkType):
+    if chunkType == '49484452' or chunkType == 'IHDR' or chunkType == 'ihdr': # IHDR Chunk
         return IdhrChunk
-    elif hexChunkType == '504C5445': # PLTE Chunk
+    elif chunkType == '504C5445' or chunkType == 'PLTE' or chunkType == 'plte': # PLTE Chunk
         return PlteChunk
-    elif hexChunkType == '49444154': # IDAT Chunk(s)
+    elif chunkType == '49444154' or chunkType == 'IDAT' or chunkType == 'idat': # IDAT Chunk(s)
         return IdatChunk
-    elif hexChunkType == '49454E44': # IEND Chunk
+    elif chunkType == '49454E44' or chunkType == 'IEND' or chunkType == 'iend': # IEND Chunk
         return IendChunk
     else:
-        raise ValueError(hexChunkType)
+        raise ValueError(chunkType)
 
 class IdhrChunk(Chunk):
     pass
