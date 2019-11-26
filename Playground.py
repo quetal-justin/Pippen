@@ -6,11 +6,11 @@ file = sys.argv[1] # get file path
 contents = ""
 
 # ---------------------------------------------------------------------------------
-# A. Data Stream
+# A. PNG Data Stream
 #
 # - to store all chunks in the image. 
 # ---------------------------------------------------------------------------------
-class Datastream:
+class PngDatastream:
 
     def __init__(self):
         self._signature = None
@@ -207,7 +207,7 @@ def get_bit(target, n, bitRange=4):
 # Z. Main
 # ---------------------------------------------------------------------------------
 
-datastream = Datastream()
+pngDatastream = PngDatastream()
 
 # 1 byte = 8 bits = 2 * 4 bits = 2 * 1 hex digit = 2 hex digits 
 with open(file, "rb") as f:
@@ -215,8 +215,8 @@ with open(file, "rb") as f:
     
     if hexLine[0:16] == "89504E470D0A1A0A": # png must begin with this eight bytes
         
-        # (optional) set png signature to the Datastream object
-        datastream.set_signature("89504E470D0A1A0A")
+        # (optional) set png signature to the PngDatastream object
+        pngDatastream.set_signature("89504E470D0A1A0A")
         
         chunkStartIdx = 16
         while chunkStartIdx != len(hexLine):
@@ -251,8 +251,8 @@ with open(file, "rb") as f:
             assert (chunk.get_data() == chunkData), "Wrong Value!!"
             assert (chunk.get_crc() == hexCrc), "Wrong Value!!"
 
-            # store Chunk object into Datastream object
-            datastream.set_chunk(chunk)
+            # store Chunk object into PngDatastream object
+            pngDatastream.set_chunk(chunk)
 
             # update chunk starting index (4 bytes + 4 bytes + length bytes + 4 bytes = 2 * (4 + 4 + length + 4) = 16 + length*2 + 8
             chunkStartIdx += 16 + length*2 + 8
@@ -260,10 +260,10 @@ with open(file, "rb") as f:
     else:
         raise ValueError(hexLine[0:16])
 
-assert (not (datastream.get_idhr_chunk() is None)), "Is None!!"
-# assert (not (datastream.get_plte_chunk() is None)), "Is None!!"
-# assert (not (datastream.get_idat_chunk() is None)), "Is None!!"
-assert (not (datastream.get_iend_chunk() is None)), "Is None!!"
+assert (not (pngDatastream.get_idhr_chunk() is None)), "Is None!!"
+# assert (not (pngDatastream.get_plte_chunk() is None)), "Is None!!"
+# assert (not (pngDatastream.get_idat_chunk() is None)), "Is None!!"
+assert (not (pngDatastream.get_iend_chunk() is None)), "Is None!!"
 
 # --- drafts ---
 #     print(hexLine)
