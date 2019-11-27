@@ -193,38 +193,42 @@ class IendChunk(Chunk):
 # - after concatenating chunk data from all IDAT chunks, it will be the Zlib data
 #   stream. This class is used to store that.
 # - [!] naming may need to be improved.
+#   (nov/26): update naming convensions based
+# - ZLIB Compressed Data Format Specification: https://www.ietf.org/rfc/rfc1950.txt
+# - (ignore - _flags - nov/26): for now, ignore validation checking for on _flags.
+# - (ignore - _checkValue - nov/26): for now, ignore Adler32 checksum
 # ---------------------------------------------------------------------------------
 class ZlibDatastream:
     
     def __init__(self):
-        self._compressionMethod = None      # 1-byte
-        self._additionalFlags = None        # 1-byte
-        self._compressedDataBlocks = None   # n-bytes
-        self._checkValue = None             # 4-bytes
+        self._compressionDetails = None # 1-byte; 2 hex chars; right hex (bits 0-3) = Compression method (CM=8 => "deflate" CM with a window size up to 32K, used by gzip and PNG), left hex (bits 4-7) = Compression info (only defined when CM=8; when CM=8, CINFO is the base-2 log of the LZ77 window size; CINFO <= 7; CINFO=7 => 32K window size).
+        self._flags = None              # 1-byte; 2 hex chars; bits 0-4 = FCHECK, bit 5 = FDICT, bit 6-7 = FLEVEL
+        self._compressedData = None     # n-bytes; 2*n hex chars; CM=8 => "deflate compressed data format"
+        self._checkValue = None         # 4-bytes; 8 hex chars; ADLER-32 Checksum
         pass
 
     # --- mutators ---
-    def get_compression_method(self):
-        return self._compressionMethod
+    def get_compression_details(self):
+        return self._compressionDetails
 
-    def get_additional_flags(self):
-        return self._additionalFlags
+    def get_flags(self):
+        return self._flags
 
-    def get_compressed_data_blocks(self):
-        return self._compressedDataBlocks
+    def get_compressed_data(self):
+        return self._compressedData
 
     def get_check_value(self):
         return self._checkValue
 
     # --- mutators ---
-    def set_compression_method(self, method):
-        self._compressionMethod = method
+    def set_compression_details(self, details):
+        self._compressionDetails = details
 
-    def set_additional_flags(self, flags):
-        self._additionalFlags = flags
+    def set_flags(self, flags):
+        self._flags = flags
 
-    def set_compressed_data_blocks(self, data):
-        self._compressedDataBlocks = data
+    def set_compressed_data(self, data):
+        self._compressedData = data
 
     def set_check_value(self, value):
         self._checkValue = value
@@ -337,24 +341,24 @@ assert (len(compressionMethod) + len(additionalFlags) + len(compressedDataBlocks
 
 # create new empty ZlibDatastream
 zlibDatastream = ZlibDatastream()
-assert (zlibDatastream.get_compression_method() is None), "Wrong Value!!"
-assert (zlibDatastream.get_additional_flags() is None), "Wrong Value!!"
-assert (zlibDatastream.get_compressed_data_blocks() is None), "Wrong Value!!"
+assert (zlibDatastream.get_compression_details() is None), "Wrong Value!!"
+assert (zlibDatastream.get_flags() is None), "Wrong Value!!"
+assert (zlibDatastream.get_compressed_data() is None), "Wrong Value!!"
 assert (zlibDatastream.get_check_value() is None), "Wrong Value!!"
 
 # store information into ZlibDatastream object
-zlibDatastream.set_compression_method(compressionMethod)
-zlibDatastream.set_additional_flags(additionalFlags)
-zlibDatastream.set_compressed_data_blocks(compressedDataBlocks)
+zlibDatastream.set_compression_details(compressionMethod)
+zlibDatastream.set_flags(additionalFlags)
+zlibDatastream.set_compressed_data(compressedDataBlocks)
 zlibDatastream.set_check_value(checkValues)
-assert (zlibDatastream.get_compression_method() == compressionMethod), "Wrong Value!!"
-assert (zlibDatastream.get_additional_flags() == additionalFlags), "Wrong Value!!"
-assert (zlibDatastream.get_compressed_data_blocks() == compressedDataBlocks), "Wrong Value!!"
+assert (zlibDatastream.get_compression_details() == compressionMethod), "Wrong Value!!"
+assert (zlibDatastream.get_flags() == additionalFlags), "Wrong Value!!"
+assert (zlibDatastream.get_compressed_data() == compressedDataBlocks), "Wrong Value!!"
 assert (zlibDatastream.get_check_value() == checkValues), "Wrong Value!!"
 
-print("[*] compression method:                  {0}".format(zlibDatastream.get_compression_method()))
-print("[*] additional flags:                    {0}".format(zlibDatastream.get_additional_flags()))
-print("[*] length of compressed data blocks:    {0}".format(len(zlibDatastream.get_compressed_data_blocks())))
+print("[*] compression method:                  {0}".format(zlibDatastream.get_compression_details()))
+print("[*] additional flags:                    {0}".format(zlibDatastream.get_flags()))
+print("[*] length of compressed data blocks:    {0}".format(len(zlibDatastream.get_compressed_data())))
 print("[*] check value:                         {0}".format(zlibDatastream.get_check_value()))
 
 # --- drafts ---
