@@ -188,6 +188,48 @@ class IendChunk(Chunk):
     pass
 
 # ---------------------------------------------------------------------------------
+# B. Zlib Data Stream
+#
+# - after concatenating chunk data from all IDAT chunks, it will be the Zlib data
+#   stream. This class is used to store that.
+# - [!] naming may need to be improved.
+# ---------------------------------------------------------------------------------
+class ZlibDatastream:
+    
+    def __init__(self):
+        self._compressionMethod = None      # 1-byte
+        self._additionalFlags = None        # 1-byte
+        self._compressedDataBlocks = None   # n-bytes
+        self._checkValue = None             # 4-bytes
+        pass
+
+    # --- mutators ---
+    def get_compression_method(self):
+        return self._compressionMethod
+
+    def get_additional_flags(self):
+        return self._additionalFlags
+
+    def get_compressed_data_blocks(self):
+        return self._compressedDataBlocks
+
+    def get_check_value(self):
+        return self._checkValue
+
+    # --- mutators ---
+    def set_compression_method(self, method):
+        self._compressionMethod = method
+
+    def set_additional_flags(self, flags):
+        self._additionalFlags = flags
+
+    def set_compressed_data_blocks(self, data):
+        self._compressedDataBlocks = data
+
+    def set_check_value(self, value):
+        self._checkValue = value
+
+# ---------------------------------------------------------------------------------
 # Y. Bits
 # ---------------------------------------------------------------------------------
 # assume it is a hex value
