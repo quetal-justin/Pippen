@@ -1,4 +1,5 @@
 import sys
+import zlib
 
 file = sys.argv[1] # get file path
 # (fileName, extName) = filePath.rsplit('.', maxsplit=1)
@@ -201,8 +202,14 @@ class IendChunk(Chunk):
 class ZlibDatastream:
     
     def __init__(self):
-        self._compressionDetails = None # 1-byte; 2 hex chars; right hex (bits 0-3) = Compression method (CM=8 => "deflate" CM with a window size up to 32K, used by gzip and PNG), left hex (bits 4-7) = Compression info (only defined when CM=8; when CM=8, CINFO is the base-2 log of the LZ77 window size; CINFO <= 7; CINFO=7 => 32K window size).
-        self._flags = None              # 1-byte; 2 hex chars; bits 0-4 = FCHECK, bit 5 = FDICT, bit 6-7 = FLEVEL
+        self._compressionDetails = None # 1-byte; 2 hex chars; right hex (bits 0-3) = Compression method 
+                                        # (CM=8 => "deflate" CM with a window size up to 32K, 
+                                        # used by gzip and PNG), 
+                                        # left hex (bits 4-7) = Compression info 
+                                        # (only defined when CM=8; 
+                                        # when CM=8, CINFO is the base-2 log of the LZ77 window size; 
+                                        # CINFO <= 7; CINFO=7 => 32K window size).
+        self._flags = None              # 1-byte; 2 hex chars; bits 0-4 = FCHECK, bit   , bit 6-7 = FLEVEL
         self._compressedData = None     # n-bytes; 2*n hex chars; CM=8 => "deflate compressed data format"
         self._checkValue = None         # 4-bytes; 8 hex chars; ADLER-32 Checksum
         pass
@@ -356,11 +363,28 @@ assert (zlibDatastream.get_flags() == additionalFlags), "Wrong Value!!"
 assert (zlibDatastream.get_compressed_data() == compressedDataBlocks), "Wrong Value!!"
 assert (zlibDatastream.get_check_value() == checkValues), "Wrong Value!!"
 
+returnObject = zlib.decompress(bytes.fromhex("".join([zlibDatastream.get_compression_details(),
+                                        zlibDatastream.get_flags(),
+                                        zlibDatastream.get_compressed_data(),
+                                        zlibDatastream.get_check_value()])),0)
+
 print("[*] compression method:                  {0}".format(zlibDatastream.get_compression_details()))
 print("[*] additional flags:                    {0}".format(zlibDatastream.get_flags()))
 print("[*] length of compressed data blocks:    {0}".format(len(zlibDatastream.get_compressed_data())))
 print("[*] check value:                         {0}".format(zlibDatastream.get_check_value()))
-
+print("[*] interlace or not:                    {0}".format(pngDatastream.get_idhr_chunk().get_data()))
+resultList = []
+PPMstring = "P3\n395 386\n255\n"
+#i=1
+for x in returnObject:
+   # if i != 0
+   PPMstring+= "{0} ".format(chr(x))
+  #  i= (i+1)%4  
+    #resultList.append(x)
+with open('testImage2.PPM','w') as f:
+    f.write(PPMstring)
+#print(resultList[386*183:386*900])
+#print("[*] SOMETHING USEFUL??:                  {0}".format(int(returnObject.hex(),16)))
 # --- drafts ---
 #     print(hexLine)
 #     # print(getBit(hexLine[0], 3))
