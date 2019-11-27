@@ -249,6 +249,7 @@ def get_bit(target, n, bitRange=4):
 # ---------------------------------------------------------------------------------
 # Step 1 : Read PNG image file, and store all the chunks
 # ---------------------------------------------------------------------------------
+print("\n[*] Execute Step 1...") 
 pngDatastream = PngDatastream()
 
 # 1 byte = 8 bits = 2 * 4 bits = 2 * 1 hex digit = 2 hex digits 
@@ -315,6 +316,46 @@ assert (not (pngDatastream.get_idhr_chunk().get_data() is None)), "Is None!!"
 for idatChunk in pngDatastream.get_idat_chunk():
     assert (not (idatChunk.get_data() is None)), "Is None!!"
 assert (not (pngDatastream.get_iend_chunk() is None)), "Is None!!"
+
+# ---------------------------------------------------------------------------------
+# Step 2 : Derive Zlib Datastream
+# ---------------------------------------------------------------------------------
+print("\n[*] Execute Step 2...") 
+
+idatChunks = pngDatastream.get_idat_chunk()
+idatChunkData = "".join([idatChunk.get_data() for idatChunk in idatChunks])     # concatenate all chunkData from IDAT chunks
+
+# parse chunk data after concatenating.
+compressionMethod = idatChunkData[0:2]         # get zlib compression method 
+additionalFlags = idatChunkData[2:4]           # get additional flags
+compressedDataBlocks = idatChunkData[4:-8]     # get compressed data blocks
+checkValues = idatChunkData[-8:]               # get check value 
+assert (len(compressionMethod) == 2), "Wrong Length!!"
+assert (len(additionalFlags) == 2), "Wrong Length!!"
+assert (len(checkValues) == 8), "Wrong Length!!"
+assert (len(compressionMethod) + len(additionalFlags) + len(compressedDataBlocks) + len(checkValues) == len(idatChunkData)), "Inconsistent Length!!"
+
+# create new empty ZlibDatastream
+zlibDatastream = ZlibDatastream()
+assert (zlibDatastream.get_compression_method() is None), "Wrong Value!!"
+assert (zlibDatastream.get_additional_flags() is None), "Wrong Value!!"
+assert (zlibDatastream.get_compressed_data_blocks() is None), "Wrong Value!!"
+assert (zlibDatastream.get_check_value() is None), "Wrong Value!!"
+
+# store information into ZlibDatastream object
+zlibDatastream.set_compression_method(compressionMethod)
+zlibDatastream.set_additional_flags(additionalFlags)
+zlibDatastream.set_compressed_data_blocks(compressedDataBlocks)
+zlibDatastream.set_check_value(checkValues)
+assert (zlibDatastream.get_compression_method() == compressionMethod), "Wrong Value!!"
+assert (zlibDatastream.get_additional_flags() == additionalFlags), "Wrong Value!!"
+assert (zlibDatastream.get_compressed_data_blocks() == compressedDataBlocks), "Wrong Value!!"
+assert (zlibDatastream.get_check_value() == checkValues), "Wrong Value!!"
+
+print("[*] compression method:                  {0}".format(zlibDatastream.get_compression_method()))
+print("[*] additional flags:                    {0}".format(zlibDatastream.get_additional_flags()))
+print("[*] length of compressed data blocks:    {0}".format(len(zlibDatastream.get_compressed_data_blocks())))
+print("[*] check value:                         {0}".format(zlibDatastream.get_check_value()))
 
 # --- drafts ---
 #     print(hexLine)
