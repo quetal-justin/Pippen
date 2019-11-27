@@ -197,6 +197,10 @@ class IendChunk(Chunk):
 # - ZLIB Compressed Data Format Specification: https://www.ietf.org/rfc/rfc1950.txt
 # - (ignore - _flags - nov/26): for now, ignore validation checking for on _flags.
 # - (ignore - _checkValue - nov/26): for now, ignore Adler32 checksum
+# - DEFLATE Compressed Data Format Specification v1.3: https://tools.ietf.org/html/rfc1951
+# - max. size of a zlib datastream  = size of concatenation result of all IDAT chunks 
+#                                   = 32k bits 
+#                                   => 32768 bytes 
 # ---------------------------------------------------------------------------------
 class ZlibDatastream:
     
