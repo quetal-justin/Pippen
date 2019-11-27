@@ -181,10 +181,7 @@ class PlteChunk(Chunk):
         pass
 
 class IdatChunk(Chunk):
-
-    # override
-    def extract_data(self, length, hexChunkData):
-        pass
+    pass
 
 # no chunk data, i.e. no need to extract data
 class IendChunk(Chunk):
@@ -207,6 +204,9 @@ def get_bit(target, n, bitRange=4):
 # Z. Main
 # ---------------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------------
+# Step 1 : Read PNG image file, and store all the chunks
+# ---------------------------------------------------------------------------------
 pngDatastream = PngDatastream()
 
 # 1 byte = 8 bits = 2 * 4 bits = 2 * 1 hex digit = 2 hex digits 
@@ -238,8 +238,9 @@ with open(file, "rb") as f:
             assert (chunk.get_crc() is None), "Wrong Value!!"
             
             # extract Chunk Data based on its type (polymorphism)
+            # if no corresponding extraction, e.g. IDAT and IEND, use the original hex data.
             chunkData = chunk.extract_data(length, hexChunkData)
-            print(chunkData)
+            chunkData = (hexChunkData) if (chunkData is None) else (chunkData)
 
             # store information into Chunk object
             chunk.set_length(length)
@@ -260,9 +261,17 @@ with open(file, "rb") as f:
     else:
         raise ValueError(hexLine[0:16])
 
+# verify PNG Datastream critique chunks is not None
+# PS: PLTE is optional so no checking for that
 assert (not (pngDatastream.get_idhr_chunk() is None)), "Is None!!"
-# assert (not (pngDatastream.get_plte_chunk() is None)), "Is None!!"
-# assert (not (pngDatastream.get_idat_chunk() is None)), "Is None!!"
+assert (not (pngDatastream.get_idat_chunk() is None)), "Is None!!"
+assert (not (pngDatastream.get_iend_chunk() is None)), "Is None!!"
+
+# verify chunk data in PNG Datastream critique chunks is not None
+# PS: PLTE is optional so no checking for that
+assert (not (pngDatastream.get_idhr_chunk().get_data() is None)), "Is None!!"
+for idatChunk in pngDatastream.get_idat_chunk():
+    assert (not (idatChunk.get_data() is None)), "Is None!!"
 assert (not (pngDatastream.get_iend_chunk() is None)), "Is None!!"
 
 # --- drafts ---
