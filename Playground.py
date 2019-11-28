@@ -161,8 +161,8 @@ class IdhrChunk(Chunk):
         assert (data['filterMethod'] is None), "Not None!!"
         assert (data['interlaceMethod'] is None), "Not None!!"
 
-        # data length must be 26 in IHDR
-        if len(hexChunkData) == length * 2:
+        # data length must be 13 bytes (26 hex) in IHDR
+        if len(hexChunkData) == length * 2 and length == 13:
             data['width'] = int(hexChunkData[0:8], 16)
             data['height'] = int(hexChunkData[8:16], 16)
             data['bitDepth'] = int(hexChunkData[16:18], 16)
@@ -172,13 +172,30 @@ class IdhrChunk(Chunk):
             data['interlaceMethod'] = int(hexChunkData[24:26], 16)
             return data
         else:
-            raise ValueError(len(hexChunkData))
+            raise ValueError("{0} {1}".format(len(hexChunkData), length))
 
 class PlteChunk(Chunk):
     
     # override
     def extract_data(self, length, hexChunkData):
-        pass
+        data = {
+            'red': None,            # 1-byte; unsigned int; 0 is invalid
+            'green': None,          # 1-byte; unsigned int; 0 is invalid
+            'blue': None,           # 1-byte; int; number of bits per sample; valid values = 1,2,4,8,16; not all values allowed for all colour types.
+        }
+
+        assert (data['red'] is None), "Not None!!"
+        assert (data['green'] is None), "Not None!!"
+        assert (data['blue'] is None), "Not None!!"
+
+        # data length must be 3 bytes (6 hex) in PLTE (must be divisible by 3)
+        if len(hexChunkData) == length * 2 and length == 3:
+            data['red'] = int(hexChunkData[0:2], 16)
+            data['green'] = int(hexChunkData[2:4], 16)
+            data['blue'] = int(hexChunkData[4:6], 16)
+            return data
+        else:
+            raise ValueError("{0} {1}".format(len(hexChunkData), length))
 
 class IdatChunk(Chunk):
     pass
@@ -363,6 +380,9 @@ assert (zlibDatastream.get_check_value() == checkValues), "Wrong Value!!"
 print("[*] compression method:                  {0}".format(zlibDatastream.get_compression_details()))
 print("[*] additional flags:                    {0}".format(zlibDatastream.get_flags()))
 print("[*] length of compressed data blocks:    {0}".format(len(zlibDatastream.get_compressed_data())))
+print("[*] BFINAL (is last block?):             {0}".format(get_bit(zlibDatastream.get_compressed_data()[1], 0))) # bit 0 of byte 0 (i.e. bit 0 of right hex)
+print("[*] BTYPE - bit 2:                       {0}".format(get_bit(zlibDatastream.get_compressed_data()[1], 1))) # bit 1 of byte 0 (i.e. bit 1 of right hex)
+print("[*] BTYPE - bit 3:                       {0}".format(get_bit(zlibDatastream.get_compressed_data()[1], 2))) # bit 2 of byte 0 (i.e. bit 2 of right hex)
 print("[*] check value:                         {0}".format(zlibDatastream.get_check_value()))
 
 # --- drafts ---
