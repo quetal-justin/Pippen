@@ -1,4 +1,5 @@
 import sys
+import zlib
 
 file = sys.argv[1] # get file path
 # (fileName, extName) = filePath.rsplit('.', maxsplit=1)
@@ -384,6 +385,21 @@ print("[*] BFINAL (is last block?):             {0}".format(get_bit(zlibDatastre
 print("[*] BTYPE - bit 2:                       {0}".format(get_bit(zlibDatastream.get_compressed_data()[1], 1))) # bit 1 of byte 0 (i.e. bit 1 of right hex)
 print("[*] BTYPE - bit 3:                       {0}".format(get_bit(zlibDatastream.get_compressed_data()[1], 2))) # bit 2 of byte 0 (i.e. bit 2 of right hex)
 print("[*] check value:                         {0}".format(zlibDatastream.get_check_value()))
+print("[*] IDHR Chunk Data:                     {0}".format(pngDatastream.get_idhr_chunk().get_data()))
+
+# ---------------------------------------------------------------------------------
+# Step 3 : Parse (or Uncompress) Zlib Datastream
+# ---------------------------------------------------------------------------------
+hexZlibDatastream = "".join([zlibDatastream.get_compression_details(),
+                                zlibDatastream.get_flags(),
+                                zlibDatastream.get_compressed_data(),
+                                zlibDatastream.get_check_value()])
+
+bytesZlibDatastream = bytes.fromhex(hexZlibDatastream) # hex string to bytes for decompression.
+
+rawImgData = zlib.decompress(bytesZlibDatastream, 0)
+# print(zlib.decompress(hexZlibDatastream, 0))
+
 
 # --- drafts ---
 #     print(hexLine)
