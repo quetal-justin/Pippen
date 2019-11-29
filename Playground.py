@@ -284,6 +284,10 @@ with open(file, "rb") as f:
             assert (length * 2 == len(hexChunkData)), "Inconsistent Data: hex should have a double of length than byte!!"
             assert (len(hexLine[chunkStartIdx : chunkStartIdx+8]) + len(hexChunkType) + len(hexChunkData) + len(hexCrc) == 16+length*2+8), "Inconsistent Data!"
             
+            type = hexChunkType
+            if type != '49484452' and type != '504C5445' and type != '49444154' and type != '49454E44':
+                chunkStartIdx += 16 + length*2 + 8
+                continue
             # create new Chunk of corresponding type
             chunk = Chunk.create(hexChunkType)
             assert (chunk.get_length() is None), "Wrong Value!!"
@@ -368,20 +372,24 @@ returnObject = zlib.decompress(bytes.fromhex("".join([zlibDatastream.get_compres
                                         zlibDatastream.get_compressed_data(),
                                         zlibDatastream.get_check_value()])),0)
 
+IHDR_Chunk = pngDatastream.get_idhr_chunk().get_data()
+print("[*] IHDR CHUNK:                          {0}".format(IHDR_Chunk))
+
 print("[*] compression method:                  {0}".format(zlibDatastream.get_compression_details()))
 print("[*] additional flags:                    {0}".format(zlibDatastream.get_flags()))
 print("[*] length of compressed data blocks:    {0}".format(len(zlibDatastream.get_compressed_data())))
 print("[*] check value:                         {0}".format(zlibDatastream.get_check_value()))
 print("[*] interlace or not:                    {0}".format(pngDatastream.get_idhr_chunk().get_data()))
 resultList = []
-PPMstring = "P3\n395 386\n255\n"
-#i=1
+
+PPMstring = "P3\n200 200\n255\n"
+#i=0
 for x in returnObject:
-   # if i != 0
-   PPMstring+= "{0} ".format(chr(x))
-  #  i= (i+1)%4  
-    #resultList.append(x)
-with open('testImage2.PPM','w') as f:
+#   if i != 3:
+   PPMstring+= "{0} ".format(x)
+   #i= (i+1)%4  
+ #   resultList.append(x)
+with open('testImage3.PPM','w') as f:
     f.write(PPMstring)
 #print(resultList[386*183:386*900])
 #print("[*] SOMETHING USEFUL??:                  {0}".format(int(returnObject.hex(),16)))
