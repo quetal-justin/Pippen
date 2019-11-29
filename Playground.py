@@ -73,7 +73,7 @@ class PngDatastream:
         self._iendChunk = iendChunk
 
 # ---------------------------------------------------------------------------------
-# X. Chunk
+# A2. Chunk
 # 
 # - Factor Pattern for object creation
 # - if not having __init__(self) in subclass, super class's __init__(self) is called
@@ -299,30 +299,31 @@ with open(file, "rb") as f:
             assert (length * 2 == len(hexChunkData)), "Inconsistent Data: hex should have a double of length than byte!!"
             assert (len(hexLine[chunkStartIdx : chunkStartIdx+8]) + len(hexChunkType) + len(hexChunkData) + len(hexCrc) == 16+length*2+8), "Inconsistent Data!"
             
-            # create new Chunk of corresponding type
-            chunk = Chunk.create(hexChunkType)
-            assert (chunk.get_length() is None), "Wrong Value!!"
-            assert (chunk.get_type() is None), "Wrong Value!!"
-            assert (chunk.get_data() is None), "Wrong Value!!"
-            assert (chunk.get_crc() is None), "Wrong Value!!"
-            
-            # extract Chunk Data based on its type (polymorphism)
-            # if no corresponding extraction, e.g. IDAT and IEND, use the original hex data.
-            chunkData = chunk.extract_data(length, hexChunkData)
-            chunkData = (hexChunkData) if (chunkData is None) else (chunkData)
+            if hexChunkType == '49484452' or hexChunkType == '504C5445' or hexChunkType == '49444154' or hexChunkType == '49454E44': # if not critical chunk type, skip.
+                # create new Chunk of corresponding type
+                chunk = Chunk.create(hexChunkType)
+                assert (chunk.get_length() is None), "Wrong Value!!"
+                assert (chunk.get_type() is None), "Wrong Value!!"
+                assert (chunk.get_data() is None), "Wrong Value!!"
+                assert (chunk.get_crc() is None), "Wrong Value!!"
+                
+                # extract Chunk Data based on its type (polymorphism)
+                # if no corresponding extraction, e.g. IDAT and IEND, use the original hex data.
+                chunkData = chunk.extract_data(length, hexChunkData)
+                chunkData = (hexChunkData) if (chunkData is None) else (chunkData)
 
-            # store information into Chunk object
-            chunk.set_length(length)
-            chunk.set_type(hexChunkType)
-            chunk.set_data(chunkData)
-            chunk.set_crc(hexCrc)
-            assert (chunk.get_length() == length), "Wrong Value!!"
-            assert (chunk.get_type() == hexChunkType), "Wrong Value!!"
-            assert (chunk.get_data() == chunkData), "Wrong Value!!"
-            assert (chunk.get_crc() == hexCrc), "Wrong Value!!"
+                # store information into Chunk object
+                chunk.set_length(length)
+                chunk.set_type(hexChunkType)
+                chunk.set_data(chunkData)
+                chunk.set_crc(hexCrc)
+                assert (chunk.get_length() == length), "Wrong Value!!"
+                assert (chunk.get_type() == hexChunkType), "Wrong Value!!"
+                assert (chunk.get_data() == chunkData), "Wrong Value!!"
+                assert (chunk.get_crc() == hexCrc), "Wrong Value!!"
 
-            # store Chunk object into PngDatastream object
-            pngDatastream.set_chunk(chunk)
+                # store Chunk object into PngDatastream object
+                pngDatastream.set_chunk(chunk)
 
             # update chunk starting index (4 bytes + 4 bytes + length bytes + 4 bytes = 2 * (4 + 4 + length + 4) = 16 + length*2 + 8
             chunkStartIdx += 16 + length*2 + 8
@@ -344,7 +345,7 @@ for idatChunk in pngDatastream.get_idat_chunk():
 assert (not (pngDatastream.get_iend_chunk() is None)), "Is None!!"
 
 # ---------------------------------------------------------------------------------
-# Step 2 : Derive Zlib Datastream
+# Step 2a : Derive Zlib Datastream
 # ---------------------------------------------------------------------------------
 print("\n[*] Execute Step 2...") 
 
@@ -388,7 +389,7 @@ print("[*] check value:                         {0}".format(zlibDatastream.get_c
 print("[*] IDHR Chunk Data:                     {0}".format(pngDatastream.get_idhr_chunk().get_data()))
 
 # ---------------------------------------------------------------------------------
-# Step 3 : Parse (or Uncompress) Zlib Datastream
+# Step 2b : Decompress Zlib Datastream
 # ---------------------------------------------------------------------------------
 hexZlibDatastream = "".join([zlibDatastream.get_compression_details(),
                                 zlibDatastream.get_flags(),
@@ -424,21 +425,22 @@ header = "\n".join([lineOne, lineTwo, lineThree])
 
 # --- format data ---
 data = ""
-
-dataList = [] # imtermediate result
-
-i=0
-for x in rawImgData:
-    if i != 3:
-        dataList.append(x)
-    i = (i+1)%4
+dataList = []
+for i in range(0, len(rawImgData)):
+    # print("{0} {1}".format(i, rawImgData[i]))
+    if pngDatastream.get_idhr_chunk().get_data()['colourType'] == 6 or pngDatastream.get_idhr_chunk().get_data()['colourType'] == 4: # with alpha
+        if i % ((width*3)+1) != 0 and i % 4 != 0:
+            dataList.append(rawImgData[i])
+    else:
+        if i % ((width*3)+1) != 0:
+            dataList.append(rawImgData[i])
 
 data = " ".join([str(data) for data in dataList])
 
 # --- combine header and data; output image ---
 image = header + "\n" + data
 
-with open('images/out_image.ppm','w') as f:
+with open('images/out_image2.ppm','w') as f:
     f.write(image)
 
 # --- drafts ---
