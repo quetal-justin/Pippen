@@ -400,6 +400,46 @@ bytesZlibDatastream = bytes.fromhex(hexZlibDatastream) # hex string to bytes for
 rawImgData = zlib.decompress(bytesZlibDatastream, 0)
 # print(zlib.decompress(hexZlibDatastream, 0))
 
+# ---------------------------------------------------------------------------------
+# Step 4 : Format and Output PPM
+# ---------------------------------------------------------------------------------
+image = ""
+
+# --- format header ---
+header = ""
+
+# atomic elements
+imgType = "P3" # P3 = ppm
+width = pngDatastream.get_idhr_chunk().get_data()['width']
+height = pngDatastream.get_idhr_chunk().get_data()['height']
+maxPixelVal = (1 << (pngDatastream.get_idhr_chunk().get_data()['bitDepth'])) - 1 # 0...255 = (1...256) - 1 = (2**8)-1 = (1<<8)-1
+
+# combine lines
+lineOne = imgType
+lineTwo = " ".join([str(width), str(height)]) 
+lineThree = str(maxPixelVal)
+header = "\n".join([lineOne, lineTwo, lineThree])
+
+# print(header)
+
+# --- format data ---
+data = ""
+
+dataList = [] # imtermediate result
+
+i=0
+for x in rawImgData:
+    if i != 3:
+        dataList.append(x)
+    i = (i+1)%4
+
+data = " ".join([str(data) for data in dataList])
+
+# --- combine header and data; output image ---
+image = header + "\n" + data
+
+with open('images/out_image.ppm','w') as f:
+    f.write(image)
 
 # --- drafts ---
 #     print(hexLine)
