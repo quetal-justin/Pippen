@@ -1,3 +1,12 @@
+"""
+SCI 2000 Group Project - Image Compression
+
+Name:   Justin M. C. Choi & Mike Winkler
+Date:   Dec/03/2019 (Tue) 
+
+Run:    python3 Playground.py <image_path>
+"""
+
 import sys
 import zlib
 
@@ -5,6 +14,10 @@ file = sys.argv[1] # get file path
 # (fileName, extName) = filePath.rsplit('.', maxsplit=1)
 
 contents = ""
+
+# =================================================================================
+# Classes and Functions
+# =================================================================================
 
 # ---------------------------------------------------------------------------------
 # A. PNG Data Stream
@@ -268,9 +281,9 @@ def get_bit(target, n, bitRange=4):
     else:
         return None
 
-# ---------------------------------------------------------------------------------
-# Z. Main
-# ---------------------------------------------------------------------------------
+# =================================================================================
+# Main
+# =================================================================================
 
 # ---------------------------------------------------------------------------------
 # Step 1 : Read PNG image file, and store all the chunks
@@ -398,8 +411,14 @@ hexZlibDatastream = "".join([zlibDatastream.get_compression_details(),
 
 bytesZlibDatastream = bytes.fromhex(hexZlibDatastream) # hex string to bytes for decompression.
 
-rawImgData = zlib.decompress(bytesZlibDatastream, 0)
-# print(zlib.decompress(hexZlibDatastream, 0))
+bytesFilteredScanlines = zlib.decompress(bytesZlibDatastream, 0)
+
+# hexStrFilteredScanlines = bytesFilteredScanlines.hex().upper() # for reconstruction in the future.
+
+# ---------------------------------------------------------------------------------
+# Step 3a : Derive Filtered Scanlines
+# ---------------------------------------------------------------------------------
+
 
 # ---------------------------------------------------------------------------------
 # Step 4 : Format and Output PPM
@@ -423,17 +442,19 @@ header = "\n".join([lineOne, lineTwo, lineThree])
 
 # print(header)
 
-# --- format data ---
+# --- format data (draft) ---
 data = ""
 dataList = []
-for i in range(0, len(rawImgData)):
+for i in range(0, len(bytesFilteredScanlines)):
     # print("{0} {1}".format(i, rawImgData[i]))
     if pngDatastream.get_idhr_chunk().get_data()['colourType'] == 6 or pngDatastream.get_idhr_chunk().get_data()['colourType'] == 4: # with alpha
-        if i % ((width*3)+1) != 0 and i % 4 != 0:
-            dataList.append(rawImgData[i])
-    else:
+        if i % ((width*3)+1) != 0 and i % 4 != 0: # 
+            dataList.append(bytesFilteredScanlines[i])
+        # elif i % ((width*3)+1) != 0:
+        #     print(bytesFilteredScanlines[i])
+    else: # without alpha
         if i % ((width*3)+1) != 0:
-            dataList.append(rawImgData[i])
+            dataList.append(bytesFilteredScanlines[i])
 
 data = " ".join([str(data) for data in dataList])
 
@@ -443,15 +464,4 @@ image = header + "\n" + data
 with open('images/out_image2.ppm','w') as f:
     f.write(image)
 
-# --- drafts ---
-#     print(hexLine)
-#     # print(getBit(hexLine[0], 3))
-
-
-# # print(globals()['ChunkCreator'])
-
-# plteChunk = Chunk.create('504C5445')
-# print(plteChunk.get_length())
-
-# iendChunk = Chunk.create('49454E44')
-# print(iendChunk.extract_data(1,'E3'))
+print("[*] Program ends...")
