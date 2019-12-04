@@ -11,7 +11,8 @@ import sys
 import zlib
 
 file = sys.argv[1] # get file path
-# (fileName, extName) = filePath.rsplit('.', maxsplit=1)
+
+(fileName, extName) = file.rsplit('.', maxsplit=1)
 
 contents = ""
 
@@ -461,7 +462,9 @@ data = " ".join([str(data) for data in dataList])
 # --- combine header and data; output image ---
 image = header + "\n" + data
 
-with open('images/out_image2.ppm','w') as f:
+outFileName = ".".join([fileName, "ppm"])
+
+with open(outFileName,'w') as f:
     f.write(image)
 
 print("[*] Program ends...")
