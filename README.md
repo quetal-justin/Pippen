@@ -45,11 +45,8 @@ We rebuild the shape of Pippen (the penguin picture) successfully.
 
 ## References
 
-- Portable Network Graphics (PNG) Specification (Second Edition) 
-  https://www.w3.org/TR/2003/REC-PNG-20031110/#8Interlace
+- [Portable Network Graphics (PNG) Specification (Second Edition)](https://www.w3.org/TR/2003/REC-PNG-20031110/#8Interlace)
 
-- ZLIB Compressed Data Format Specification
-  https://www.ietf.org/rfc/rfc1950.txt
+- [ZLIB Compressed Data Format Specification](https://www.ietf.org/rfc/rfc1950.txt)
 
-- DEFLATE Compressed Data Format Specification version 1.3
-  https://tools.ietf.org/html/rfc1951
+- [DEFLATE Compressed Data Format Specification version 1.3](https://tools.ietf.org/html/rfc1951)
