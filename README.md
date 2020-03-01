@@ -9,7 +9,7 @@
 
 ## Goal
 
-Our goal in this project is to convert an PGM image into a PPM image.
+Our goal in this project is to convert an PNG image into a PPM image.
 
 ## Steps
 
